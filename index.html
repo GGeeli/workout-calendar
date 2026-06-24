@@ -766,6 +766,7 @@
 
         <div class="field">
           <label for="workoutNotes">Notes</label>
+          <div class="entry-subtle" id="presetEditorLabel">Editing preset: Warm up</div>
           <textarea id="workoutNotes" placeholder="Weights, reps, route, energy level, next goal..."></textarea>
         </div>
 
@@ -866,6 +867,7 @@
       const workoutName = document.getElementById("workoutName");
       const workoutDurationWheel = document.getElementById("workoutDurationWheel");
       const workoutDurationViewport = document.querySelector(".duration-wheel-viewport");
+      const presetEditorLabel = document.getElementById("presetEditorLabel");
       const workoutNotes = document.getElementById("workoutNotes");
       const addWorkoutButton = document.getElementById("addWorkoutButton");
       const clearDayButton = document.getElementById("clearDayButton");
@@ -1310,6 +1312,12 @@
         return activePresetType ? (presetNotes[activePresetType] || "") : "";
       }
 
+      function updatePresetEditorLabel() {
+        presetEditorLabel.textContent = activePresetType
+          ? `Editing preset: ${activePresetType}`
+          : "Editing preset: none selected";
+      }
+
       function saveNotesToSelectedTypes(notes) {
         if (!activePresetType) {
           return;
@@ -1602,10 +1610,6 @@
           ? activeTypes.filter((type) => type !== nextType)
           : [...activeTypes, nextType];
 
-        activePresetType = wasActive
-          ? (activePresetType === nextType ? activeTypes[activeTypes.length - 1] || null : activePresetType)
-          : nextType;
-
         getWorkoutTypeButtons().forEach((button) => {
           if (!button.dataset.type) {
             return;
@@ -1614,6 +1618,8 @@
           button.classList.toggle("active", activeTypes.includes(button.dataset.type));
         });
 
+        activePresetType = nextType;
+        updatePresetEditorLabel();
         workoutNotes.value = getActivePresetText();
       }
 
@@ -1734,6 +1740,7 @@
       getWorkoutTypeButtons().forEach((button) => {
         button.classList.toggle("active", activeTypes.includes(button.dataset.type));
       });
+      updatePresetEditorLabel();
       workoutNotes.value = getActivePresetText();
 
       if ("serviceWorker" in navigator) {
