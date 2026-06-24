@@ -854,6 +854,7 @@
     (function () {
       const STORAGE_KEY = "workout-calendar-v1";
       const WEIGHT_STORAGE_KEY = "weight-log-v1";
+      const PRESET_STORAGE_KEY = "workout-preset-notes-v1";
       const pageButtons = Array.from(document.querySelectorAll(".tab-btn"));
       const pages = Array.from(document.querySelectorAll(".page"));
       const calendarGrid = document.getElementById("calendarGrid");
@@ -891,7 +892,7 @@
 
       const today = new Date();
       const durationOptions = Array.from({ length: 34 }, (_, index) => 15 + index * 5);
-      const presetNotes = {
+      const defaultPresetNotes = {
         "Warm up": "Jumping jacks 30/30/30\nArm circles 20/20/20",
         Back: "Pull-ups 10/10/10\nInverted rows 15/15/15",
         Chest: "Bench press 10/10/10\nIncline dumbbell press 12/12/12",
@@ -900,9 +901,11 @@
         Legs: "Squats 10/10/10\nLunges 12/12/12",
         Stretching: "Hamstring stretch 30/30/30\nChest stretch 30/30/30"
       };
+      const presetNotes = loadPresetNotes();
       let viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
       let selectedDate = formatDate(today);
       let activeTypes = ["Warm up"];
+      let activePresetType = "Warm up";
       let activePage = "workouts";
       let activeWeightRange = "all";
       let selectedDuration = 45;
@@ -910,7 +913,7 @@
       let weights = loadWeights();
       renderDurationWheel();
       weightDateInput.value = formatDate(today);
-      workoutNotes.value = presetNotes.Back;
+      workoutNotes.value = getActivePresetText();
       let durationScrollTimer = null;
 
       function formatDate(date) {
@@ -1063,6 +1066,31 @@
 
       function saveWeights(list) {
         localStorage.setItem(WEIGHT_STORAGE_KEY, JSON.stringify(list));
+      }
+
+      function loadPresetNotes() {
+        try {
+          const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+          if (!raw) {
+            return { ...defaultPresetNotes };
+          }
+
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") {
+            return { ...defaultPresetNotes };
+          }
+
+          return {
+            ...defaultPresetNotes,
+            ...parsed
+          };
+        } catch (error) {
+          return { ...defaultPresetNotes };
+        }
+      }
+
+      function savePresetNotes() {
+        localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presetNotes));
       }
 
       function setActivePage(pageName) {
@@ -1279,7 +1307,16 @@
       }
 
       function getActivePresetText() {
-        return activeTypes.map((type) => presetNotes[type]).filter(Boolean).join("\n\n");
+        return activePresetType ? (presetNotes[activePresetType] || "") : "";
+      }
+
+      function saveNotesToSelectedTypes(notes) {
+        if (!activePresetType) {
+          return;
+        }
+
+        presetNotes[activePresetType] = notes;
+        savePresetNotes();
       }
 
       function getWeightRangeLabel() {
@@ -1560,9 +1597,14 @@
       }
 
       function updateTypeButtons(nextType) {
-        activeTypes = activeTypes.includes(nextType)
+        const wasActive = activeTypes.includes(nextType);
+        activeTypes = wasActive
           ? activeTypes.filter((type) => type !== nextType)
           : [...activeTypes, nextType];
+
+        activePresetType = wasActive
+          ? (activePresetType === nextType ? activeTypes[activeTypes.length - 1] || null : activePresetType)
+          : nextType;
 
         getWorkoutTypeButtons().forEach((button) => {
           if (!button.dataset.type) {
@@ -1625,6 +1667,10 @@
         weightDateInput.value = formatDate(today);
       });
       clearWeightButton.addEventListener("click", clearAllWeights);
+
+      workoutNotes.addEventListener("input", () => {
+        saveNotesToSelectedTypes(workoutNotes.value);
+      });
 
       pageButtons.forEach((button) => {
         button.addEventListener("click", () => setActivePage(button.dataset.page));
