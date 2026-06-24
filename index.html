@@ -754,10 +754,10 @@
         <div class="field">
           <label>Type</label>
           <div class="tag-row" id="typeButtons">
-            <button class="type-btn active" type="button" data-type="Strength">Strength</button>
-            <button class="type-btn" type="button" data-type="Cardio">Cardio</button>
-            <button class="type-btn" type="button" data-type="Mobility">Mobility</button>
-            <button class="type-btn" type="button" data-type="Recovery">Recovery</button>
+            <button class="type-btn active" type="button" data-type="Back">Back</button>
+            <button class="type-btn" type="button" data-type="Chest">Chest</button>
+            <button class="type-btn" type="button" data-type="Biceps">Biceps</button>
+            <button class="type-btn" type="button" data-type="Legs">Legs</button>
           </div>
         </div>
 
@@ -889,9 +889,15 @@
 
       const today = new Date();
       const durationOptions = Array.from({ length: 34 }, (_, index) => 15 + index * 5);
+      const presetNotes = {
+        Back: "Pull-ups 10/10/10\nInverted rows 15/15/15",
+        Chest: "Bench press 10/10/10\nIncline dumbbell press 12/12/12",
+        Biceps: "Barbell curls 10/10/10\nHammer curls 12/12/12",
+        Legs: "Squats 10/10/10\nLunges 12/12/12"
+      };
       let viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
       let selectedDate = formatDate(today);
-      let activeType = "Strength";
+      let activeType = "Back";
       let activePage = "workouts";
       let activeWeightRange = "all";
       let selectedDuration = 45;
@@ -899,6 +905,7 @@
       let weights = loadWeights();
       renderDurationWheel();
       weightDateInput.value = formatDate(today);
+      workoutNotes.value = presetNotes.Back;
       let durationScrollTimer = null;
 
       function formatDate(date) {
@@ -1452,7 +1459,7 @@
         workoutName.value = "";
         selectedDuration = 45;
         renderDurationWheel();
-        workoutNotes.value = "";
+        workoutNotes.value = presetNotes[activeType] || "";
         monthHint.textContent = "Workout saved locally on this device.";
         renderAll();
       }
@@ -1522,6 +1529,7 @@
         typeButtons.forEach((button) => {
           button.classList.toggle("active", button.dataset.type === nextType);
         });
+        workoutNotes.value = presetNotes[nextType] || "";
       }
 
       async function copySummary() {
