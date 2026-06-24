@@ -929,6 +929,7 @@
       let selectedDuration = 45;
       let workouts = loadWorkouts();
       let weights = loadWeights();
+      let isRenderingPresetNotes = false;
       renderDurationWheel();
       weightDateInput.value = formatDate(today);
       workoutNotes.value = "";
@@ -1326,7 +1327,15 @@
       }
 
       function getActivePresetText() {
-        return activePresetType ? (presetNotes[activePresetType] || "") : "";
+        return activeTypes.map((type) => presetNotes[type]).filter(Boolean).join("\n\n");
+      }
+
+      function renderPresetNotes() {
+        isRenderingPresetNotes = true;
+        workoutNotes.value = getActivePresetText();
+        window.requestAnimationFrame(() => {
+          isRenderingPresetNotes = false;
+        });
       }
 
       function updatePresetEditorLabel() {
@@ -1336,7 +1345,7 @@
       }
 
       function saveNotesToSelectedTypes(notes) {
-        if (!activePresetType) {
+        if (!activePresetType || isRenderingPresetNotes) {
           return;
         }
 
@@ -1549,7 +1558,7 @@
         saveWorkouts(workouts);
         selectedDuration = 45;
         renderDurationWheel();
-        workoutNotes.value = getActivePresetText();
+        renderPresetNotes();
         monthHint.textContent = "Workout saved locally on this device.";
         renderAll();
       }
@@ -1631,7 +1640,7 @@
         });
 
         updatePresetEditorLabel();
-        workoutNotes.value = getActivePresetText();
+        renderPresetNotes();
       }
 
       async function copySummary() {
@@ -1749,7 +1758,7 @@
         button.classList.toggle("active", activeTypes.includes(button.dataset.type));
       });
       updatePresetEditorLabel();
-      workoutNotes.value = getActivePresetText();
+      renderPresetNotes();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
