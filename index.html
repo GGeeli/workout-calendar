@@ -449,6 +449,29 @@
     z-index: 1;
   }
 
+  @media (max-width: 520px) {
+    .duration-wheel {
+      height: 104px;
+    }
+
+    .duration-wheel-viewport {
+      padding: 32px 0;
+    }
+
+    .duration-wheel-item {
+      height: 28px;
+      font-size: 14px;
+    }
+
+    .duration-wheel-item.selected {
+      font-size: 18px;
+    }
+
+    .duration-wheel-center {
+      height: 28px;
+    }
+  }
+
   input::placeholder, textarea::placeholder {
     color: rgba(238, 244, 255, 0.35);
   }
@@ -1545,12 +1568,26 @@
       });
 
       workoutDurationWheel.addEventListener("click", (event) => {
-        const item = event.target.closest(".duration-wheel-item");
-        if (!item) {
+        const wheelBounds = workoutDurationViewport.getBoundingClientRect();
+        const clickY = event.clientY - wheelBounds.top + workoutDurationViewport.scrollTop;
+        const items = Array.from(workoutDurationWheel.querySelectorAll(".duration-wheel-item"));
+        let nearestItem = null;
+        let nearestDistance = Number.POSITIVE_INFINITY;
+
+        items.forEach((item) => {
+          const itemCenter = item.offsetTop + item.offsetHeight / 2;
+          const distance = Math.abs(itemCenter - clickY);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestItem = item;
+          }
+        });
+
+        if (!nearestItem) {
           return;
         }
 
-        setDurationFromWheel(Number(item.dataset.duration));
+        setDurationFromWheel(Number(nearestItem.dataset.duration));
       });
 
       document.addEventListener("keydown", (event) => {
