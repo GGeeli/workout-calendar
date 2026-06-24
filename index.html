@@ -229,14 +229,31 @@
   }
 
   .day.has-workout::after {
-    content: "";
-    position: absolute;
-    bottom: 8px;
-    width: 7px;
-    height: 7px;
+  }
+
+  .workout-check {
+    width: 24px;
+    height: 24px;
+    margin-top: 6px;
     border-radius: 50%;
-    background: var(--accent);
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+    color: #06130d;
+    background: rgba(230, 255, 243, 0.96);
     box-shadow: 0 0 0 4px rgba(102, 227, 180, 0.12);
+  }
+
+  .day.has-workout {
+    background: linear-gradient(to top, rgba(13, 73, 48, 0.95) 0%, rgba(28, 140, 90, 0.94) 100%);
+    border-color: rgba(102, 227, 180, 0.55);
+    color: #f1fff8;
+  }
+
+  .day.has-workout .day-count {
+    color: rgba(241, 255, 248, 0.82);
   }
 
   .day .day-number {
@@ -699,7 +716,7 @@
 
           cell.innerHTML = `
             <div class="day-number">${cellDate.getDate()}</div>
-            <div class="day-count">${count ? `${count} workout${count > 1 ? "s" : ""}` : ""}</div>
+            ${count ? '<div class="workout-check">✓</div>' : ''}
           `;
 
           cell.addEventListener("click", () => {
