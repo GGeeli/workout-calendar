@@ -26,6 +26,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (event.request.url.endsWith("/sw.js")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", responseClone));
+          return response;
+        })
+        .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) {
