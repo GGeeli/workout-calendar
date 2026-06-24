@@ -449,14 +449,6 @@
     z-index: 1;
   }
 
-  .duration-wheel-value {
-    margin-top: 8px;
-    text-align: center;
-    color: var(--accent);
-    font-size: 13px;
-    font-weight: 700;
-  }
-
   input::placeholder, textarea::placeholder {
     color: rgba(238, 244, 255, 0.35);
   }
@@ -703,7 +695,6 @@
               <div class="duration-wheel-center" aria-hidden="true"></div>
               <div class="duration-wheel-viewport" id="workoutDurationWheel"></div>
             </div>
-            <div class="duration-wheel-value" id="workoutDurationValue">45 min</div>
           </div>
         </div>
 
@@ -818,7 +809,6 @@
       const workoutName = document.getElementById("workoutName");
       const workoutDurationWheel = document.getElementById("workoutDurationWheel");
       const workoutDurationViewport = document.querySelector(".duration-wheel-viewport");
-      const workoutDurationValue = document.getElementById("workoutDurationValue");
       const workoutNotes = document.getElementById("workoutNotes");
       const addWorkoutButton = document.getElementById("addWorkoutButton");
       const clearDayButton = document.getElementById("clearDayButton");
@@ -879,19 +869,20 @@
         workoutDurationWheel.innerHTML = durationOptions
           .map((duration) => `<div class="duration-wheel-item${duration === selectedDuration ? " selected" : ""}" data-duration="${duration}">${duration}</div>`)
           .join("");
-        workoutDurationValue.textContent = `${selectedDuration} min`;
 
-        const selectedIndex = durationOptions.indexOf(selectedDuration);
-        if (selectedIndex >= 0) {
-          const itemHeight = 42;
-          const padding = 54;
-          workoutDurationViewport.scrollTop = Math.max(0, selectedIndex * itemHeight - (itemHeight + padding / 2));
-        }
+        window.requestAnimationFrame(() => {
+          const selectedItem = workoutDurationWheel.querySelector(".duration-wheel-item.selected");
+          if (!selectedItem) {
+            return;
+          }
+
+          const centeredOffset = (workoutDurationViewport.clientHeight - selectedItem.offsetHeight) / 2;
+          workoutDurationViewport.scrollTop = Math.max(0, selectedItem.offsetTop - centeredOffset);
+        });
       }
 
       function setDurationFromWheel(duration) {
         selectedDuration = duration;
-        workoutDurationValue.textContent = `${selectedDuration} min`;
         workoutDurationWheel.querySelectorAll(".duration-wheel-item").forEach((item) => {
           item.classList.toggle("selected", Number(item.dataset.duration) === selectedDuration);
         });
