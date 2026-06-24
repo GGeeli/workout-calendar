@@ -373,6 +373,46 @@
     resize: vertical;
   }
 
+  input[type="range"] {
+    appearance: none;
+    height: 42px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+  }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(102, 227, 180, 0.35), rgba(90, 169, 255, 0.65));
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 30px;
+    height: 30px;
+    margin-top: -9px;
+    border-radius: 50%;
+    background: #eef4ff;
+    border: 3px solid #66e3b4;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  }
+
+  input[type="range"]::-moz-range-track {
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(102, 227, 180, 0.35), rgba(90, 169, 255, 0.65));
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #eef4ff;
+    border: 3px solid #66e3b4;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  }
+
   input::placeholder, textarea::placeholder {
     color: rgba(238, 244, 255, 0.35);
   }
@@ -615,7 +655,8 @@
           </div>
           <div class="field">
             <label for="workoutDuration">Duration</label>
-            <input id="workoutDuration" type="text" placeholder="45 min">
+            <input id="workoutDuration" type="range" min="15" max="180" step="5" value="45">
+            <div class="entry-subtle" id="workoutDurationValue">45 min</div>
           </div>
         </div>
 
@@ -729,6 +770,7 @@
       const entryList = document.getElementById("entryList");
       const workoutName = document.getElementById("workoutName");
       const workoutDuration = document.getElementById("workoutDuration");
+      const workoutDurationValue = document.getElementById("workoutDurationValue");
       const workoutNotes = document.getElementById("workoutNotes");
       const addWorkoutButton = document.getElementById("addWorkoutButton");
       const clearDayButton = document.getElementById("clearDayButton");
@@ -762,6 +804,7 @@
       let activeWeightRange = "all";
       let workouts = loadWorkouts();
       let weights = loadWeights();
+      workoutDurationValue.textContent = `${workoutDuration.value} min`;
       weightDateInput.value = formatDate(today);
 
       function formatDate(date) {
@@ -1236,7 +1279,7 @@
 
       function addWorkout() {
         const name = workoutName.value.trim();
-        const duration = workoutDuration.value.trim();
+        const duration = `${workoutDuration.value} min`;
         const notes = workoutNotes.value.trim();
 
         if (!name) {
@@ -1256,7 +1299,8 @@
 
         saveWorkouts(workouts);
         workoutName.value = "";
-        workoutDuration.value = "";
+        workoutDuration.value = "45";
+        workoutDurationValue.textContent = `${workoutDuration.value} min`;
         workoutNotes.value = "";
         monthHint.textContent = "Workout saved locally on this device.";
         renderAll();
@@ -1390,6 +1434,10 @@
 
       weightRangeButtons.forEach((button) => {
         button.addEventListener("click", () => setWeightRange(button.dataset.range));
+      });
+
+      workoutDuration.addEventListener("input", () => {
+        workoutDurationValue.textContent = `${workoutDuration.value} min`;
       });
 
       document.addEventListener("keydown", (event) => {
