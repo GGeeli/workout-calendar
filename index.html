@@ -758,6 +758,8 @@
             <button class="type-btn" type="button" data-type="Chest">Chest</button>
             <button class="type-btn" type="button" data-type="Biceps">Biceps</button>
             <button class="type-btn" type="button" data-type="Legs">Legs</button>
+            <button class="type-btn" type="button" id="addTypeButton" aria-label="Add exercise type">+</button>
+            <button class="type-btn" type="button" id="clearTypeSelectionButton">Clear</button>
           </div>
         </div>
 
@@ -866,13 +868,14 @@
       const addWorkoutButton = document.getElementById("addWorkoutButton");
       const clearDayButton = document.getElementById("clearDayButton");
       const copySummaryButton = document.getElementById("copySummaryButton");
+      const addTypeButton = document.getElementById("addTypeButton");
+      const clearTypeSelectionButton = document.getElementById("clearTypeSelectionButton");
       const prevMonthButton = document.getElementById("prevMonth");
       const nextMonthButton = document.getElementById("nextMonth");
       const todayButton = document.getElementById("todayBtn");
       const monthTotal = document.getElementById("monthTotal");
       const dayTotal = document.getElementById("dayTotal");
       const streakTotal = document.getElementById("streakTotal");
-      const typeButtons = Array.from(document.querySelectorAll(".type-btn"));
       const weightDateInput = document.getElementById("weightDate");
       const weightValueInput = document.getElementById("weightValue");
       const weightNotesInput = document.getElementById("weightNotes");
@@ -895,9 +898,10 @@
         Biceps: "Barbell curls 10/10/10\nHammer curls 12/12/12",
         Legs: "Squats 10/10/10\nLunges 12/12/12"
       };
+      const presetTypes = ["Back", "Chest", "Biceps", "Legs"];
       let viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
       let selectedDate = formatDate(today);
-      let activeType = "Back";
+      let activeTypes = ["Back"];
       let activePage = "workouts";
       let activeWeightRange = "all";
       let selectedDuration = 45;
@@ -1020,6 +1024,27 @@
 
       function saveWorkouts(list) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      }
+
+      function normalizeWorkoutTypes(value) {
+        if (Array.isArray(value)) {
+          return value.filter(Boolean);
+        }
+
+        if (typeof value === "string" && value.trim()) {
+          return value.split(",").map((item) => item.trim()).filter(Boolean);
+        }
+
+        return [];
+      }
+
+      function getWorkoutTypeButtons() {
+        return Array.from(document.querySelectorAll("#typeButtons .type-btn[data-type]"));
+      }
+
+      function formatWorkoutTypes(value) {
+        const types = normalizeWorkoutTypes(value);
+        return types.join(", ");
       }
 
       function loadWeights() {
@@ -1230,7 +1255,7 @@
           item.innerHTML = `
             <div>
               <strong>${escapeHtml(entry.name)}</strong>
-              <span>${escapeHtml(entry.type)} • ${escapeHtml(entry.duration)}</span>
+              <span>${escapeHtml(formatWorkoutTypes(entry.type) || "Workout")} • ${escapeHtml(entry.duration)}</span>
               ${entry.notes ? `<div style="margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.45;">${escapeHtml(entry.notes)}</div>` : ""}
             </div>
             <button class="delete-btn" type="button">Delete</button>
@@ -1250,6 +1275,10 @@
         const monthEntries = workoutsForMonth(viewDate);
         monthTotal.textContent = String(monthEntries.length);
         streakTotal.textContent = String(computeStreak());
+      }
+
+      function getActivePresetText() {
+        return activeTypes.map((type) => presetNotes[type]).filter(Boolean).join("\n\n");
       }
 
       function getWeightRangeLabel() {
@@ -1446,12 +1475,17 @@
           return;
         }
 
+        if (activeTypes.length === 0) {
+          monthHint.textContent = "Select at least one exercise type before saving.";
+          return;
+        }
+
         workouts.unshift({
           id: crypto.randomUUID(),
           date: selectedDate,
           name,
           duration: duration || "45 min",
-          type: activeType,
+          type: [...activeTypes],
           notes
         });
 
@@ -1459,7 +1493,7 @@
         workoutName.value = "";
         selectedDuration = 45;
         renderDurationWheel();
-        workoutNotes.value = presetNotes[activeType] || "";
+        workoutNotes.value = getActivePresetText();
         monthHint.textContent = "Workout saved locally on this device.";
         renderAll();
       }
@@ -1525,11 +1559,71 @@
       }
 
       function updateTypeButtons(nextType) {
-        activeType = nextType;
-        typeButtons.forEach((button) => {
-          button.classList.toggle("active", button.dataset.type === nextType);
+        activeTypes = activeTypes.includes(nextType)
+          ? activeTypes.filter((type) => type !== nextType)
+          : [...activeTypes, nextType];
+
+        if (activeTypes.length === 0) {
+          activeTypes = [nextType];
+        }
+
+        getWorkoutTypeButtons().forEach((button) => {
+          if (!button.dataset.type) {
+            return;
+          }
+
+          button.classList.toggle("active", activeTypes.includes(button.dataset.type));
         });
-        workoutNotes.value = presetNotes[nextType] || "";
+
+        workoutNotes.value = getActivePresetText();
+      }
+
+      function clearTypeSelection() {
+        activeTypes = [];
+        getWorkoutTypeButtons().forEach((button) => {
+          if (button.dataset.type) {
+            button.classList.remove("active");
+          }
+        });
+        workoutNotes.value = "";
+      }
+
+      function addCustomType() {
+        const name = window.prompt("Add a new exercise type:");
+        if (!name) {
+          return;
+        }
+
+        const trimmedName = name.trim();
+        if (!trimmedName) {
+          return;
+        }
+
+        if (presetNotes[trimmedName]) {
+          updateTypeButtons(trimmedName);
+          return;
+        }
+
+        const notes = window.prompt(`Preset notes for ${trimmedName} (optional):`, "") || "";
+        presetNotes[trimmedName] = notes.trim();
+        presetTypes.push(trimmedName);
+
+        const typeButtonRow = document.getElementById("typeButtons");
+        const newButton = document.createElement("button");
+        newButton.className = "type-btn active";
+        newButton.type = "button";
+        newButton.dataset.type = trimmedName;
+        newButton.textContent = trimmedName;
+        newButton.addEventListener("click", () => updateTypeButtons(trimmedName));
+        typeButtonRow.insertBefore(newButton, addTypeButton);
+
+        activeTypes = [trimmedName];
+        workoutNotes.value = getActivePresetText();
+        getWorkoutTypeButtons().forEach((button) => {
+          if (button.dataset.type) {
+            button.classList.toggle("active", button.dataset.type === trimmedName);
+          }
+        });
       }
 
       async function copySummary() {
@@ -1578,6 +1672,8 @@
       clearDayButton.addEventListener("click", clearSelectedDay);
       copySummaryButton.addEventListener("click", copySummary);
       addWeightButton.addEventListener("click", addWeightEntry);
+      addTypeButton.addEventListener("click", addCustomType);
+      clearTypeSelectionButton.addEventListener("click", clearTypeSelection);
       weightTodayButton.addEventListener("click", () => {
         weightDateInput.value = formatDate(today);
       });
@@ -1587,7 +1683,11 @@
         button.addEventListener("click", () => setActivePage(button.dataset.page));
       });
 
-      typeButtons.forEach((button) => {
+      getWorkoutTypeButtons().forEach((button) => {
+        if (!button.dataset.type) {
+          return;
+        }
+
         button.addEventListener("click", () => updateTypeButtons(button.dataset.type));
       });
 
@@ -1638,7 +1738,11 @@
       });
 
       renderAll();
-      updateTypeButtons(activeType);
+      getWorkoutTypeButtons().forEach((button) => {
+        button.classList.toggle("active", activeTypes.includes(button.dataset.type));
+      });
+      workoutNotes.value = getActivePresetText();
+      updateTypeButtons("Back");
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
