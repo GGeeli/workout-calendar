@@ -373,44 +373,88 @@
     resize: vertical;
   }
 
-  input[type="range"] {
-    appearance: none;
+  .duration-wheel {
+    position: relative;
+    height: 150px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+  }
+
+  .duration-wheel::before,
+  .duration-wheel::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 48px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .duration-wheel::before {
+    top: 0;
+    background: linear-gradient(180deg, rgba(5, 11, 20, 0.92), rgba(5, 11, 20, 0));
+  }
+
+  .duration-wheel::after {
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(5, 11, 20, 0.92), rgba(5, 11, 20, 0));
+  }
+
+  .duration-wheel-viewport {
+    height: 100%;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 54px 0;
+    position: relative;
+  }
+
+  .duration-wheel-viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .duration-wheel-item {
     height: 42px;
-    padding: 0;
-    background: transparent;
-    border: 0;
+    display: grid;
+    place-items: center;
+    scroll-snap-align: center;
+    color: rgba(238, 244, 255, 0.52);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    user-select: none;
   }
 
-  input[type="range"]::-webkit-slider-runnable-track {
-    height: 12px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(102, 227, 180, 0.35), rgba(90, 169, 255, 0.65));
+  .duration-wheel-item.selected {
+    color: #eef4ff;
+    font-size: 24px;
   }
 
-  input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    width: 30px;
-    height: 30px;
-    margin-top: -9px;
-    border-radius: 50%;
-    background: #eef4ff;
-    border: 3px solid #66e3b4;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  .duration-wheel-center {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    height: 42px;
+    transform: translateY(-50%);
+    border-top: 1px solid rgba(102, 227, 180, 0.32);
+    border-bottom: 1px solid rgba(102, 227, 180, 0.32);
+    background: rgba(102, 227, 180, 0.07);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 1;
   }
 
-  input[type="range"]::-moz-range-track {
-    height: 12px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(102, 227, 180, 0.35), rgba(90, 169, 255, 0.65));
-  }
-
-  input[type="range"]::-moz-range-thumb {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: #eef4ff;
-    border: 3px solid #66e3b4;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  .duration-wheel-value {
+    margin-top: 8px;
+    text-align: center;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
   }
 
   input::placeholder, textarea::placeholder {
@@ -654,9 +698,12 @@
             <input id="workoutName" type="text" placeholder="Push day, run, leg session...">
           </div>
           <div class="field">
-            <label for="workoutDuration">Duration</label>
-            <input id="workoutDuration" type="range" min="15" max="180" step="5" value="45">
-            <div class="entry-subtle" id="workoutDurationValue">45 min</div>
+            <label id="workoutDurationLabel">Duration</label>
+            <div class="duration-wheel" aria-labelledby="workoutDurationLabel" aria-label="Workout duration picker">
+              <div class="duration-wheel-center" aria-hidden="true"></div>
+              <div class="duration-wheel-viewport" id="workoutDurationWheel"></div>
+            </div>
+            <div class="duration-wheel-value" id="workoutDurationValue">45 min</div>
           </div>
         </div>
 
@@ -769,7 +816,8 @@
       const selectedDateMeta = document.getElementById("selectedDateMeta");
       const entryList = document.getElementById("entryList");
       const workoutName = document.getElementById("workoutName");
-      const workoutDuration = document.getElementById("workoutDuration");
+      const workoutDurationWheel = document.getElementById("workoutDurationWheel");
+      const workoutDurationViewport = document.querySelector(".duration-wheel-viewport");
       const workoutDurationValue = document.getElementById("workoutDurationValue");
       const workoutNotes = document.getElementById("workoutNotes");
       const addWorkoutButton = document.getElementById("addWorkoutButton");
@@ -797,15 +845,18 @@
       const weightRangeButtons = Array.from(document.querySelectorAll("#weightRangeButtons .range-btn"));
 
       const today = new Date();
+      const durationOptions = Array.from({ length: 34 }, (_, index) => 15 + index * 5);
       let viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
       let selectedDate = formatDate(today);
       let activeType = "Strength";
       let activePage = "workouts";
       let activeWeightRange = "all";
+      let selectedDuration = 45;
       let workouts = loadWorkouts();
       let weights = loadWeights();
-      workoutDurationValue.textContent = `${workoutDuration.value} min`;
+      renderDurationWheel();
       weightDateInput.value = formatDate(today);
+      let durationScrollTimer = null;
 
       function formatDate(date) {
         const year = date.getFullYear();
@@ -822,6 +873,48 @@
           month: "long",
           day: "numeric"
         });
+      }
+
+      function renderDurationWheel() {
+        workoutDurationWheel.innerHTML = durationOptions
+          .map((duration) => `<div class="duration-wheel-item${duration === selectedDuration ? " selected" : ""}" data-duration="${duration}">${duration}</div>`)
+          .join("");
+        workoutDurationValue.textContent = `${selectedDuration} min`;
+
+        const selectedIndex = durationOptions.indexOf(selectedDuration);
+        if (selectedIndex >= 0) {
+          const itemHeight = 42;
+          const padding = 54;
+          workoutDurationViewport.scrollTop = Math.max(0, selectedIndex * itemHeight - (itemHeight + padding / 2));
+        }
+      }
+
+      function setDurationFromWheel(duration) {
+        selectedDuration = duration;
+        workoutDurationValue.textContent = `${selectedDuration} min`;
+        workoutDurationWheel.querySelectorAll(".duration-wheel-item").forEach((item) => {
+          item.classList.toggle("selected", Number(item.dataset.duration) === selectedDuration);
+        });
+      }
+
+      function syncDurationWheel() {
+        const items = Array.from(workoutDurationWheel.querySelectorAll(".duration-wheel-item"));
+        const centerY = workoutDurationViewport.scrollTop + workoutDurationViewport.clientHeight / 2;
+        let closestItem = items[0];
+        let smallestDistance = Number.POSITIVE_INFINITY;
+
+        items.forEach((item) => {
+          const itemCenter = item.offsetTop + item.offsetHeight / 2;
+          const distance = Math.abs(itemCenter - centerY);
+          if (distance < smallestDistance) {
+            smallestDistance = distance;
+            closestItem = item;
+          }
+        });
+
+        if (closestItem) {
+          setDurationFromWheel(Number(closestItem.dataset.duration));
+        }
       }
 
       function loadWorkouts() {
@@ -1279,7 +1372,7 @@
 
       function addWorkout() {
         const name = workoutName.value.trim();
-        const duration = `${workoutDuration.value} min`;
+        const duration = `${selectedDuration} min`;
         const notes = workoutNotes.value.trim();
 
         if (!name) {
@@ -1299,8 +1392,8 @@
 
         saveWorkouts(workouts);
         workoutName.value = "";
-        workoutDuration.value = "45";
-        workoutDurationValue.textContent = `${workoutDuration.value} min`;
+        selectedDuration = 45;
+        renderDurationWheel();
         workoutNotes.value = "";
         monthHint.textContent = "Workout saved locally on this device.";
         renderAll();
@@ -1436,12 +1529,27 @@
         button.addEventListener("click", () => setWeightRange(button.dataset.range));
       });
 
-      workoutDuration.addEventListener("input", () => {
-        workoutDurationValue.textContent = `${workoutDuration.value} min`;
+      workoutDurationViewport.addEventListener("scroll", () => {
+        if (durationScrollTimer) {
+          window.clearTimeout(durationScrollTimer);
+        }
+
+        durationScrollTimer = window.setTimeout(() => {
+          syncDurationWheel();
+        }, 90);
+      });
+
+      workoutDurationWheel.addEventListener("click", (event) => {
+        const item = event.target.closest(".duration-wheel-item");
+        if (!item) {
+          return;
+        }
+
+        setDurationFromWheel(Number(item.dataset.duration));
       });
 
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" && (document.activeElement === workoutName || document.activeElement === workoutDuration)) {
+        if (event.key === "Enter" && document.activeElement === workoutName) {
           addWorkout();
         }
         if (event.key === "Enter" && (document.activeElement === weightDateInput || document.activeElement === weightValueInput)) {
