@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Workout Calendar</title>
+<meta name="theme-color" content="#07111f">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #07111f;
+    --panel: rgba(10, 20, 36, 0.88);
+    --panel-strong: #0d1a2d;
+    --line: rgba(255, 255, 255, 0.10);
+    --text: #eef4ff;
+    --muted: #a5b2c8;
+    --accent: #66e3b4;
+    --accent-2: #5aa9ff;
+    --accent-3: #ffb86b;
+    --danger: #ff6b7a;
+    --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+    --radius-xl: 28px;
+    --radius-lg: 20px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(circle at top left, rgba(90, 169, 255, 0.24), transparent 35%),
+      radial-gradient(circle at bottom right, rgba(102, 227, 180, 0.18), transparent 30%),
+      linear-gradient(180deg, #050b14 0%, #091626 48%, #050b14 100%);
+    color: var(--text);
+    padding: 18px;
+    display: grid;
+    place-items: center;
+  }
+
+  .app {
+    width: min(100%, 460px);
+    min-height: min(100vh - 36px, 920px);
+    display: grid;
+    grid-template-rows: auto auto auto 1fr auto;
+    gap: 14px;
+  }
+
+  .hero, .stats, .calendar, .day-detail, .entry-form {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(18px);
+  }
+
+  .hero {
+    border-radius: var(--radius-xl);
+    padding: 18px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -30px -40px auto;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(102, 227, 180, 0.24), transparent 68%);
+    pointer-events: none;
+  }
+
+  .eyebrow {
+    margin: 0 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(26px, 6vw, 34px);
+    line-height: 1.05;
+  }
+
+  .subtitle {
+    margin: 10px 0 0;
+    color: var(--muted);
+    line-height: 1.45;
+    font-size: 14px;
+  }
+
+  .stats {
+    border-radius: var(--radius-lg);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .stat {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    padding: 12px 10px;
+    min-height: 82px;
+  }
+
+  .stat span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .stat strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 24px;
+  }
+
+  .stat small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+  }
+
+  .calendar {
+    border-radius: var(--radius-xl);
+    padding: 14px;
+  }
+
+  .calendar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .month-label {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .nav-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  .icon-btn, .chip, .primary-btn, .ghost-btn {
+    border: 0;
+    border-radius: 999px;
+    min-height: 44px;
+  }
+
+  .icon-btn {
+    width: 44px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+  }
+
+  .weekdays, .grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .weekdays {
+    margin-bottom: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .weekdays div, .day {
+    display: grid;
+    place-items: center;
+    text-align: center;
+  }
+
+  .day {
+    position: relative;
+    min-height: 52px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 6px 4px;
+    cursor: pointer;
+    transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+  }
+
+  .day:active {
+    transform: scale(0.98);
+  }
+
+  .day.outside {
+    color: rgba(238, 244, 255, 0.28);
+    background: transparent;
+  }
+
+  .day.today {
+    border-color: rgba(90, 169, 255, 0.48);
+    background: rgba(90, 169, 255, 0.12);
+  }
+
+  .day.selected {
+    background: linear-gradient(180deg, rgba(102, 227, 180, 0.26), rgba(90, 169, 255, 0.16));
+    border-color: rgba(102, 227, 180, 0.5);
+  }
+
+  .day.has-workout::after {
+    content: "";
+    position: absolute;
+    bottom: 8px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(102, 227, 180, 0.12);
+  }
+
+  .day .day-number {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .day .day-count {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .day-detail {
+    border-radius: var(--radius-xl);
+    padding: 16px;
+  }
+
+  .detail-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .detail-head h2 {
+    margin: 0;
+    font-size: 20px;
+  }
+
+  .detail-head p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .chip {
+    padding: 0 12px;
+    background: rgba(102, 227, 180, 0.12);
+    color: var(--accent);
+    border: 1px solid rgba(102, 227, 180, 0.18);
+  }
+
+  .entry-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .entry {
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .entry strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .entry span {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .delete-btn {
+    border: 0;
+    background: rgba(255, 107, 122, 0.12);
+    color: #ffc1c8;
+    border-radius: 999px;
+    min-height: 38px;
+    padding: 0 12px;
+  }
+
+  .entry-form {
+    border-radius: var(--radius-xl);
+    padding: 16px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .form-row {
+    display: grid;
+    gap: 10px;
+  }
+
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+
+  .field label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  input, select, textarea {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    border-radius: 14px;
+    min-height: 46px;
+    padding: 12px 14px;
+    font: inherit;
+    outline: none;
+  }
+
+  textarea {
+    min-height: 84px;
+    resize: vertical;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: rgba(238, 244, 255, 0.35);
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .type-btn {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    padding: 0 12px;
+    min-height: 40px;
+  }
+
+  .type-btn.active {
+    background: rgba(90, 169, 255, 0.16);
+    border-color: rgba(90, 169, 255, 0.32);
+  }
+
+  .form-actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+  }
+
+  .primary-btn {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: #04101b;
+    font-weight: 700;
+    padding: 0 16px;
+  }
+
+  .ghost-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .footer-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding-bottom: 4px;
+  }
+
+  @media (min-width: 520px) {
+    body {
+      padding: 24px;
+    }
+
+    .app {
+      min-height: auto;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <p class="eyebrow">Workout calendar</p>
+      <h1>Track every session on your phone</h1>
+      <p class="subtitle">Tap a date to review your workout history, add new sessions in seconds, and keep your training streak visible at a glance.</p>
+    </section>
+
+    <section class="stats" aria-label="Workout summary">
+      <div class="stat">
+        <span>This month</span>
+        <strong id="monthTotal">0</strong>
+        <small>workouts logged</small>
+      </div>
+      <div class="stat">
+        <span>Selected day</span>
+        <strong id="dayTotal">0</strong>
+        <small>entries saved</small>
+      </div>
+      <div class="stat">
+        <span>Streak</span>
+        <strong id="streakTotal">0</strong>
+        <small>active days</small>
+      </div>
+    </section>
+
+    <section class="calendar" aria-label="Calendar">
+      <div class="calendar-top">
+        <div>
+          <div class="month-label" id="monthLabel">Month</div>
+          <div style="color: var(--muted); font-size: 13px; margin-top: 4px;" id="monthHint">Tap a day to add or review workouts.</div>
+        </div>
+        <div class="nav-row">
+          <button class="icon-btn" id="prevMonth" aria-label="Previous month">‹</button>
+          <button class="icon-btn" id="todayBtn" aria-label="Jump to today">•</button>
+          <button class="icon-btn" id="nextMonth" aria-label="Next month">›</button>
+        </div>
+      </div>
+
+      <div class="weekdays" aria-hidden="true">
+        <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+      </div>
+      <div class="grid" id="calendarGrid"></div>
+    </section>
+
+    <section class="day-detail" aria-live="polite">
+      <div class="detail-head">
+        <div>
+          <h2 id="selectedDateTitle">Today</h2>
+          <p id="selectedDateMeta">No workouts yet.</p>
+        </div>
+        <button class="chip" id="clearDayButton" type="button">Clear day</button>
+      </div>
+      <div class="entry-list" id="entryList"></div>
+    </section>
+
+    <section class="entry-form">
+      <div class="form-row">
+        <div class="field">
+          <label for="workoutName">Workout</label>
+          <input id="workoutName" type="text" placeholder="Push day, run, leg session...">
+        </div>
+        <div class="field">
+          <label for="workoutDuration">Duration</label>
+          <input id="workoutDuration" type="text" placeholder="45 min">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Type</label>
+        <div class="tag-row" id="typeButtons">
+          <button class="type-btn active" type="button" data-type="Strength">Strength</button>
+          <button class="type-btn" type="button" data-type="Cardio">Cardio</button>
+          <button class="type-btn" type="button" data-type="Mobility">Mobility</button>
+          <button class="type-btn" type="button" data-type="Recovery">Recovery</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="workoutNotes">Notes</label>
+        <textarea id="workoutNotes" placeholder="Weights, reps, route, energy level, next goal..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="primary-btn" id="addWorkoutButton" type="button">Add workout</button>
+        <button class="ghost-btn" id="copySummaryButton" type="button">Copy summary</button>
+      </div>
+    </section>
+
+    <div class="footer-note">Your workouts are stored locally on this device.</div>
+  </main>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = "workout-calendar-v1";
+      const calendarGrid = document.getElementById("calendarGrid");
+      const monthLabel = document.getElementById("monthLabel");
+      const monthHint = document.getElementById("monthHint");
+      const selectedDateTitle = document.getElementById("selectedDateTitle");
+      const selectedDateMeta = document.getElementById("selectedDateMeta");
+      const entryList = document.getElementById("entryList");
+      const workoutName = document.getElementById("workoutName");
+      const workoutDuration = document.getElementById("workoutDuration");
+      const workoutNotes = document.getElementById("workoutNotes");
+      const addWorkoutButton = document.getElementById("addWorkoutButton");
+      const clearDayButton = document.getElementById("clearDayButton");
+      const copySummaryButton = document.getElementById("copySummaryButton");
+      const prevMonthButton = document.getElementById("prevMonth");
+      const nextMonthButton = document.getElementById("nextMonth");
+      const todayButton = document.getElementById("todayBtn");
+      const monthTotal = document.getElementById("monthTotal");
+      const dayTotal = document.getElementById("dayTotal");
+      const streakTotal = document.getElementById("streakTotal");
+      const typeButtons = Array.from(document.querySelectorAll(".type-btn"));
+
+      const today = new Date();
+      let viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
+      let selectedDate = formatDate(today);
+      let activeType = "Strength";
+      let workouts = loadWorkouts();
+
+      function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function formatLongDate(dateString) {
+        const [year, month, day] = dateString.split("-").map(Number);
+        const date = new Date(year, month - 1, day);
+        return date.toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric"
+        });
+      }
+
+      function loadWorkouts() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            return seedWorkouts();
+          }
+          const parsed = JSON.parse(raw);
+          return Array.isArray(parsed) ? parsed : seedWorkouts();
+        } catch (error) {
+          return seedWorkouts();
+        }
+      }
+
+      function seedWorkouts() {
+        const seeded = [
+          {
+            id: crypto.randomUUID(),
+            date: formatDate(today),
+            name: "Upper body strength",
+            duration: "55 min",
+            type: "Strength",
+            notes: "Bench, rows, shoulder press, finish with planks."
+          },
+          {
+            id: crypto.randomUUID(),
+            date: formatDate(new Date(today.getFullYear(), today.getMonth(), Math.max(1, today.getDate() - 2))),
+            name: "Easy run",
+            duration: "30 min",
+            type: "Cardio",
+            notes: "Comfortable pace, kept heart rate in zone 2."
+          }
+        ];
+        saveWorkouts(seeded);
+        return seeded;
+      }
+
+      function saveWorkouts(list) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      }
+
+      function workoutsForDate(date) {
+        return workouts.filter((entry) => entry.date === date);
+      }
+
+      function workoutsForMonth(date) {
+        return workouts.filter((entry) => {
+          const entryDate = new Date(`${entry.date}T00:00:00`);
+          return entryDate.getFullYear() === date.getFullYear() && entryDate.getMonth() === date.getMonth();
+        });
+      }
+
+      function uniqueWorkoutDays() {
+        return new Set(workouts.map((entry) => entry.date));
+      }
+
+      function computeStreak() {
+        const dates = Array.from(uniqueWorkoutDays()).sort().reverse();
+        if (dates.length === 0) {
+          return 0;
+        }
+
+        let streak = 0;
+        let cursor = new Date(today);
+        cursor.setHours(0, 0, 0, 0);
+
+        while (true) {
+          const key = formatDate(cursor);
+          if (!dates.includes(key)) {
+            if (streak === 0 && key !== formatDate(today)) {
+              cursor.setDate(cursor.getDate() - 1);
+              continue;
+            }
+            break;
+          }
+          streak += 1;
+          cursor.setDate(cursor.getDate() - 1);
+        }
+
+        return streak;
+      }
+
+      function renderCalendar() {
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
+        const monthName = viewDate.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+        monthLabel.textContent = monthName;
+
+        const firstDay = new Date(year, month, 1);
+        const startOffset = (firstDay.getDay() + 6) % 7;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        const monthWorkoutDays = new Set(
+          workoutsForMonth(viewDate).map((entry) => Number(entry.date.slice(-2)))
+        );
+
+        calendarGrid.innerHTML = "";
+
+        for (let index = 0; index < 42; index += 1) {
+          const cell = document.createElement("button");
+          cell.type = "button";
+          cell.className = "day";
+
+          let cellDate;
+          let isOutsideMonth = false;
+
+          if (index < startOffset) {
+            const day = daysInPrevMonth - startOffset + index + 1;
+            cellDate = new Date(year, month - 1, day);
+            isOutsideMonth = true;
+          } else if (index >= startOffset + daysInMonth) {
+            const day = index - startOffset - daysInMonth + 1;
+            cellDate = new Date(year, month + 1, day);
+            isOutsideMonth = true;
+          } else {
+            const day = index - startOffset + 1;
+            cellDate = new Date(year, month, day);
+          }
+
+          const dateKey = formatDate(cellDate);
+          const count = workoutsForDate(dateKey).length;
+
+          cell.dataset.date = dateKey;
+          if (isOutsideMonth) {
+            cell.classList.add("outside");
+          }
+          if (dateKey === formatDate(today)) {
+            cell.classList.add("today");
+          }
+          if (dateKey === selectedDate) {
+            cell.classList.add("selected");
+          }
+          if (monthWorkoutDays.has(cellDate.getDate())) {
+            cell.classList.add("has-workout");
+          }
+
+          cell.innerHTML = `
+            <div class="day-number">${cellDate.getDate()}</div>
+            <div class="day-count">${count ? `${count} workout${count > 1 ? "s" : ""}` : ""}</div>
+          `;
+
+          cell.addEventListener("click", () => {
+            selectedDate = dateKey;
+            renderAll();
+          });
+
+          calendarGrid.appendChild(cell);
+        }
+      }
+
+      function renderSelectedDay() {
+        const entries = workoutsForDate(selectedDate).sort((a, b) => a.name.localeCompare(b.name));
+        selectedDateTitle.textContent = formatLongDate(selectedDate);
+        selectedDateMeta.textContent = entries.length
+          ? `${entries.length} workout${entries.length > 1 ? "s" : ""} logged on this day.`
+          : "No workouts yet on this day.";
+
+        entryList.innerHTML = "";
+
+        if (entries.length === 0) {
+          const emptyState = document.createElement("div");
+          emptyState.className = "entry";
+          emptyState.innerHTML = `<div><strong>Add your first workout</strong><span>Use the form below to save a session to this date.</span></div>`;
+          entryList.appendChild(emptyState);
+          dayTotal.textContent = "0";
+          return;
+        }
+
+        dayTotal.textContent = String(entries.length);
+
+        entries.forEach((entry) => {
+          const item = document.createElement("div");
+          item.className = "entry";
+          item.innerHTML = `
+            <div>
+              <strong>${escapeHtml(entry.name)}</strong>
+              <span>${escapeHtml(entry.type)} • ${escapeHtml(entry.duration)}</span>
+              ${entry.notes ? `<div style="margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.45;">${escapeHtml(entry.notes)}</div>` : ""}
+            </div>
+            <button class="delete-btn" type="button">Delete</button>
+          `;
+
+          item.querySelector("button").addEventListener("click", () => {
+            workouts = workouts.filter((workout) => workout.id !== entry.id);
+            saveWorkouts(workouts);
+            renderAll();
+          });
+
+          entryList.appendChild(item);
+        });
+      }
+
+      function renderSummary() {
+        const monthEntries = workoutsForMonth(viewDate);
+        monthTotal.textContent = String(monthEntries.length);
+        streakTotal.textContent = String(computeStreak());
+      }
+
+      function renderAll() {
+        renderCalendar();
+        renderSelectedDay();
+        renderSummary();
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function addWorkout() {
+        const name = workoutName.value.trim();
+        const duration = workoutDuration.value.trim();
+        const notes = workoutNotes.value.trim();
+
+        if (!name) {
+          workoutName.focus();
+          monthHint.textContent = "Please give the workout a name before saving.";
+          return;
+        }
+
+        workouts.unshift({
+          id: crypto.randomUUID(),
+          date: selectedDate,
+          name,
+          duration: duration || "45 min",
+          type: activeType,
+          notes
+        });
+
+        saveWorkouts(workouts);
+        workoutName.value = "";
+        workoutDuration.value = "";
+        workoutNotes.value = "";
+        monthHint.textContent = "Workout saved locally on this device.";
+        renderAll();
+      }
+
+      function clearSelectedDay() {
+        const remaining = workouts.filter((entry) => entry.date !== selectedDate);
+        if (remaining.length === workouts.length) {
+          monthHint.textContent = "There are no workouts to clear on this day.";
+          return;
+        }
+
+        workouts = remaining;
+        saveWorkouts(workouts);
+        renderAll();
+      }
+
+      function updateTypeButtons(nextType) {
+        activeType = nextType;
+        typeButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.type === nextType);
+        });
+      }
+
+      async function copySummary() {
+        const entries = workoutsForDate(selectedDate);
+        const lines = [
+          `${formatLongDate(selectedDate)} workout summary`,
+          entries.length ? `${entries.length} session${entries.length > 1 ? "s" : ""}` : "No sessions logged yet."
+        ];
+
+        entries.forEach((entry) => {
+          lines.push(`- ${entry.name} (${entry.type}, ${entry.duration})${entry.notes ? `: ${entry.notes}` : ""}`);
+        });
+
+        const text = lines.join("\n");
+
+        try {
+          await navigator.clipboard.writeText(text);
+          monthHint.textContent = "Summary copied to clipboard.";
+        } catch (error) {
+          monthHint.textContent = text;
+        }
+      }
+
+      prevMonthButton.addEventListener("click", () => {
+        viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+        renderAll();
+      });
+
+      nextMonthButton.addEventListener("click", () => {
+        viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+        renderAll();
+      });
+
+      todayButton.addEventListener("click", () => {
+        viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        selectedDate = formatDate(today);
+        renderAll();
+      });
+
+      addWorkoutButton.addEventListener("click", addWorkout);
+      clearDayButton.addEventListener("click", clearSelectedDay);
+      copySummaryButton.addEventListener("click", copySummary);
+
+      typeButtons.forEach((button) => {
+        button.addEventListener("click", () => updateTypeButtons(button.dataset.type));
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && (document.activeElement === workoutName || document.activeElement === workoutDuration)) {
+          addWorkout();
+        }
+      });
+
+      renderAll();
+      updateTypeButtons(activeType);
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("sw.js").catch(() => {
+            // Offline support is optional; the app still works without the worker.
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Workout Calendar">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#66e3b4"/>
+      <stop offset="100%" stop-color="#5aa9ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="#07111f"/>
+  <rect x="28" y="36" width="136" height="128" rx="28" fill="#0d1a2d" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+  <rect x="44" y="58" width="104" height="14" rx="7" fill="url(#g)"/>
+  <g fill="#eef4ff" opacity="0.95">
+    <circle cx="58" cy="100" r="10"/>
+    <circle cx="96" cy="100" r="10"/>
+    <circle cx="134" cy="100" r="10"/>
+    <circle cx="58" cy="128" r="10"/>
+    <circle cx="96" cy="128" r="10"/>
+  </g>
+  <path d="M44 160c18-18 40-28 60-28s42 10 64 28" fill="none" stroke="#66e3b4" stroke-width="10" stroke-linecap="round"/>
+</svg>
