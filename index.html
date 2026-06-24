@@ -754,12 +754,13 @@
         <div class="field">
           <label>Type</label>
           <div class="tag-row" id="typeButtons">
-            <button class="type-btn active" type="button" data-type="Back">Back</button>
+            <button class="type-btn active" type="button" data-type="Warm up">Warm up</button>
             <button class="type-btn" type="button" data-type="Chest">Chest</button>
+            <button class="type-btn" type="button" data-type="Back">Back</button>
             <button class="type-btn" type="button" data-type="Biceps">Biceps</button>
+            <button class="type-btn" type="button" data-type="Core">Core</button>
             <button class="type-btn" type="button" data-type="Legs">Legs</button>
-            <button class="type-btn" type="button" id="addTypeButton" aria-label="Add exercise type">+</button>
-            <button class="type-btn" type="button" id="clearTypeSelectionButton">Clear</button>
+            <button class="type-btn" type="button" data-type="Stretching">Stretching</button>
           </div>
         </div>
 
@@ -868,8 +869,6 @@
       const addWorkoutButton = document.getElementById("addWorkoutButton");
       const clearDayButton = document.getElementById("clearDayButton");
       const copySummaryButton = document.getElementById("copySummaryButton");
-      const addTypeButton = document.getElementById("addTypeButton");
-      const clearTypeSelectionButton = document.getElementById("clearTypeSelectionButton");
       const prevMonthButton = document.getElementById("prevMonth");
       const nextMonthButton = document.getElementById("nextMonth");
       const todayButton = document.getElementById("todayBtn");
@@ -893,15 +892,17 @@
       const today = new Date();
       const durationOptions = Array.from({ length: 34 }, (_, index) => 15 + index * 5);
       const presetNotes = {
+        "Warm up": "Jumping jacks 30/30/30\nArm circles 20/20/20",
         Back: "Pull-ups 10/10/10\nInverted rows 15/15/15",
         Chest: "Bench press 10/10/10\nIncline dumbbell press 12/12/12",
         Biceps: "Barbell curls 10/10/10\nHammer curls 12/12/12",
-        Legs: "Squats 10/10/10\nLunges 12/12/12"
+        Core: "Plank 45/45/45\nLeg raises 15/15/15",
+        Legs: "Squats 10/10/10\nLunges 12/12/12",
+        Stretching: "Hamstring stretch 30/30/30\nChest stretch 30/30/30"
       };
-      const presetTypes = ["Back", "Chest", "Biceps", "Legs"];
       let viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
       let selectedDate = formatDate(today);
-      let activeTypes = ["Back"];
+      let activeTypes = ["Warm up"];
       let activePage = "workouts";
       let activeWeightRange = "all";
       let selectedDuration = 45;
@@ -1563,10 +1564,6 @@
           ? activeTypes.filter((type) => type !== nextType)
           : [...activeTypes, nextType];
 
-        if (activeTypes.length === 0) {
-          activeTypes = [nextType];
-        }
-
         getWorkoutTypeButtons().forEach((button) => {
           if (!button.dataset.type) {
             return;
@@ -1576,54 +1573,6 @@
         });
 
         workoutNotes.value = getActivePresetText();
-      }
-
-      function clearTypeSelection() {
-        activeTypes = [];
-        getWorkoutTypeButtons().forEach((button) => {
-          if (button.dataset.type) {
-            button.classList.remove("active");
-          }
-        });
-        workoutNotes.value = "";
-      }
-
-      function addCustomType() {
-        const name = window.prompt("Add a new exercise type:");
-        if (!name) {
-          return;
-        }
-
-        const trimmedName = name.trim();
-        if (!trimmedName) {
-          return;
-        }
-
-        if (presetNotes[trimmedName]) {
-          updateTypeButtons(trimmedName);
-          return;
-        }
-
-        const notes = window.prompt(`Preset notes for ${trimmedName} (optional):`, "") || "";
-        presetNotes[trimmedName] = notes.trim();
-        presetTypes.push(trimmedName);
-
-        const typeButtonRow = document.getElementById("typeButtons");
-        const newButton = document.createElement("button");
-        newButton.className = "type-btn active";
-        newButton.type = "button";
-        newButton.dataset.type = trimmedName;
-        newButton.textContent = trimmedName;
-        newButton.addEventListener("click", () => updateTypeButtons(trimmedName));
-        typeButtonRow.insertBefore(newButton, addTypeButton);
-
-        activeTypes = [trimmedName];
-        workoutNotes.value = getActivePresetText();
-        getWorkoutTypeButtons().forEach((button) => {
-          if (button.dataset.type) {
-            button.classList.toggle("active", button.dataset.type === trimmedName);
-          }
-        });
       }
 
       async function copySummary() {
@@ -1672,8 +1621,6 @@
       clearDayButton.addEventListener("click", clearSelectedDay);
       copySummaryButton.addEventListener("click", copySummary);
       addWeightButton.addEventListener("click", addWeightEntry);
-      addTypeButton.addEventListener("click", addCustomType);
-      clearTypeSelectionButton.addEventListener("click", clearTypeSelection);
       weightTodayButton.addEventListener("click", () => {
         weightDateInput.value = formatDate(today);
       });
@@ -1742,7 +1689,6 @@
         button.classList.toggle("active", activeTypes.includes(button.dataset.type));
       });
       workoutNotes.value = getActivePresetText();
-      updateTypeButtons("Back");
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
