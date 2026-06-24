@@ -15,9 +15,15 @@ This is a native Android version of the workout tracker with a home-screen widge
 
 1. Install Android Studio.
 2. Open this folder in Android Studio: `android-native`.
+	Do not open only `android-native/app`; open the parent `android-native` folder.
 3. Let Android Studio install/sync the Android SDK and Gradle dependencies.
 4. Select the `app` run configuration.
 5. Run it on an emulator or connected Android phone.
+
+## If Android Studio shows `prepareKotlinBuildScriptModel` errors
+
+Use **File > Invalidate Caches... > Invalidate and Restart**, then reopen the `android-native` folder.
+The project includes a compatibility Gradle task for Android Studio model sync and pins the Gradle wrapper to `8.10.2`, which is compatible with the Android Gradle Plugin used here.
 
 ## Add the widget on Android
 

@@ -14,3 +14,10 @@ android {
         versionName '1.0'
     }
 }
+
+if (!tasks.names.contains('prepareKotlinBuildScriptModel')) {
+    tasks.register('prepareKotlinBuildScriptModel') {
+        group = 'build setup'
+        description = 'Compatibility task for Android Studio model sync in this Java-only project.'
+    }
+}
