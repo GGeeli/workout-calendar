@@ -709,24 +709,6 @@
     </section>
 
     <section class="page active" data-page="workouts">
-      <section class="stats" aria-label="Workout summary">
-        <div class="stat">
-          <span>This month</span>
-          <strong id="monthTotal">0</strong>
-          <small>workouts logged</small>
-        </div>
-        <div class="stat">
-          <span>Selected day</span>
-          <strong id="dayTotal">0</strong>
-          <small>entries saved</small>
-        </div>
-        <div class="stat">
-          <span>Streak</span>
-          <strong id="streakTotal">0</strong>
-          <small>active days</small>
-        </div>
-      </section>
-
       <section class="calendar" aria-label="Calendar">
         <div class="calendar-top">
           <div>
@@ -891,9 +873,6 @@
       const prevMonthButton = document.getElementById("prevMonth");
       const nextMonthButton = document.getElementById("nextMonth");
       const todayButton = document.getElementById("todayBtn");
-      const monthTotal = document.getElementById("monthTotal");
-      const dayTotal = document.getElementById("dayTotal");
-      const streakTotal = document.getElementById("streakTotal");
       const weightDateInput = document.getElementById("weightDate");
       const weightValueInput = document.getElementById("weightValue");
       const weightNotesInput = document.getElementById("weightNotes");
@@ -1184,32 +1163,6 @@
         return new Set(workouts.map((entry) => entry.date));
       }
 
-      function computeStreak() {
-        const dates = Array.from(uniqueWorkoutDays()).sort().reverse();
-        if (dates.length === 0) {
-          return 0;
-        }
-
-        let streak = 0;
-        let cursor = new Date(today);
-        cursor.setHours(0, 0, 0, 0);
-
-        while (true) {
-          const key = formatDate(cursor);
-          if (!dates.includes(key)) {
-            if (streak === 0 && key !== formatDate(today)) {
-              cursor.setDate(cursor.getDate() - 1);
-              continue;
-            }
-            break;
-          }
-          streak += 1;
-          cursor.setDate(cursor.getDate() - 1);
-        }
-
-        return streak;
-      }
-
       function renderCalendar() {
         const year = viewDate.getFullYear();
         const month = viewDate.getMonth();
@@ -1292,11 +1245,8 @@
           emptyState.className = "entry";
           emptyState.innerHTML = `<div><strong>Add your first workout</strong><span>Use the form below to save a session to this date.</span></div>`;
           entryList.appendChild(emptyState);
-          dayTotal.textContent = "0";
           return;
         }
-
-        dayTotal.textContent = String(entries.length);
 
         entries.forEach((entry) => {
           const item = document.createElement("div");
@@ -1318,12 +1268,6 @@
 
           entryList.appendChild(item);
         });
-      }
-
-      function renderSummary() {
-        const monthEntries = workoutsForMonth(viewDate);
-        monthTotal.textContent = String(monthEntries.length);
-        streakTotal.textContent = String(computeStreak());
       }
 
       function getActivePresetText() {
@@ -1519,9 +1463,6 @@
       }
 
       function renderAll() {
-        if (activePage === "workouts") {
-          renderSummary();
-        }
         renderCalendar();
         renderSelectedDay();
         renderWeightPage();
