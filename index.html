@@ -323,6 +323,14 @@
     font-size: 13px;
   }
 
+  .entry-note {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+    white-space: pre-line;
+  }
+
   .delete-btn {
     border: 0;
     background: rgba(255, 107, 122, 0.12);
@@ -1296,7 +1304,7 @@
             <div>
               <strong>${escapeHtml(entry.name)}</strong>
               <span>${escapeHtml(formatWorkoutTypes(entry.type) || "Workout")} • ${escapeHtml(entry.duration)}</span>
-              ${entry.notes ? `<div style="margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.45;">${escapeHtml(entry.notes)}</div>` : ""}
+              ${entry.notes ? `<div class="entry-note">${escapeHtml(entry.notes)}</div>` : ""}
             </div>
             <button class="delete-btn" type="button">Delete</button>
           `;
