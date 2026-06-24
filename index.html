@@ -375,7 +375,7 @@
 
   .duration-wheel {
     position: relative;
-    height: 150px;
+    height: 124px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.10);
     background: rgba(255, 255, 255, 0.03);
@@ -388,7 +388,7 @@
     position: absolute;
     left: 0;
     right: 0;
-    height: 48px;
+    height: 34px;
     pointer-events: none;
     z-index: 2;
   }
@@ -409,7 +409,7 @@
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 54px 0;
+    padding: 44px 0;
     position: relative;
   }
 
@@ -418,12 +418,12 @@
   }
 
   .duration-wheel-item {
-    height: 42px;
+    height: 36px;
     display: grid;
     place-items: center;
     scroll-snap-align: center;
     color: rgba(238, 244, 255, 0.52);
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     letter-spacing: 0.02em;
     user-select: none;
@@ -431,7 +431,7 @@
 
   .duration-wheel-item.selected {
     color: #eef4ff;
-    font-size: 24px;
+    font-size: 20px;
   }
 
   .duration-wheel-center {
@@ -439,7 +439,7 @@
     left: 12px;
     right: 12px;
     top: 50%;
-    height: 42px;
+    height: 36px;
     transform: translateY(-50%);
     border-top: 1px solid rgba(102, 227, 180, 0.32);
     border-bottom: 1px solid rgba(102, 227, 180, 0.32);
@@ -870,6 +870,10 @@
           .map((duration) => `<div class="duration-wheel-item${duration === selectedDuration ? " selected" : ""}" data-duration="${duration}">${duration}</div>`)
           .join("");
 
+        snapDurationWheelToSelected();
+      }
+
+      function snapDurationWheelToSelected() {
         window.requestAnimationFrame(() => {
           const selectedItem = workoutDurationWheel.querySelector(".duration-wheel-item.selected");
           if (!selectedItem) {
@@ -877,7 +881,10 @@
           }
 
           const centeredOffset = (workoutDurationViewport.clientHeight - selectedItem.offsetHeight) / 2;
-          workoutDurationViewport.scrollTop = Math.max(0, selectedItem.offsetTop - centeredOffset);
+          workoutDurationViewport.scrollTo({
+            top: Math.max(0, selectedItem.offsetTop - centeredOffset),
+            behavior: "auto"
+          });
         });
       }
 
@@ -886,6 +893,7 @@
         workoutDurationWheel.querySelectorAll(".duration-wheel-item").forEach((item) => {
           item.classList.toggle("selected", Number(item.dataset.duration) === selectedDuration);
         });
+        snapDurationWheelToSelected();
       }
 
       function syncDurationWheel() {
@@ -904,7 +912,13 @@
         });
 
         if (closestItem) {
-          setDurationFromWheel(Number(closestItem.dataset.duration));
+          const nextDuration = Number(closestItem.dataset.duration);
+          if (nextDuration !== selectedDuration) {
+            setDurationFromWheel(nextDuration);
+            return;
+          }
+
+          snapDurationWheelToSelected();
         }
       }
 
@@ -1527,7 +1541,7 @@
 
         durationScrollTimer = window.setTimeout(() => {
           syncDurationWheel();
-        }, 90);
+        }, 70);
       });
 
       workoutDurationWheel.addEventListener("click", (event) => {
