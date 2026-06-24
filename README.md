@@ -16,3 +16,4 @@ A mobile-friendly workout tracker that can be deployed to GitHub Pages.
 - `sw.js` - offline caching
 - `icon.svg` - app icon
 - `.github/workflows/pages.yml` - GitHub Pages deployment workflow
+- `android-native/` - native Android app and home-screen widget project
