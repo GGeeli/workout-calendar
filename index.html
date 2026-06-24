@@ -345,6 +345,11 @@
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
   }
 
+  .duration-row {
+    grid-template-columns: minmax(180px, 260px);
+    justify-content: center;
+  }
+
   .field {
     display: grid;
     gap: 6px;
@@ -634,6 +639,10 @@
       gap: 8px;
     }
 
+    .duration-row {
+      grid-template-columns: minmax(160px, 220px);
+    }
+
     .duration-wheel {
       height: 96px;
     }
@@ -667,6 +676,10 @@
 
     .form-row {
       grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    }
+
+    .duration-row {
+      grid-template-columns: minmax(200px, 260px);
     }
 
     .tab-row {
@@ -737,11 +750,7 @@
       </section>
 
       <section class="entry-form">
-        <div class="form-row">
-          <div class="field">
-            <label for="workoutName">Workout</label>
-            <input id="workoutName" type="text" placeholder="Push day, run, leg session...">
-          </div>
+        <div class="form-row duration-row">
           <div class="field">
             <label id="workoutDurationLabel">Duration</label>
             <div class="duration-wheel" aria-labelledby="workoutDurationLabel" aria-label="Workout duration picker">
@@ -864,7 +873,6 @@
       const selectedDateTitle = document.getElementById("selectedDateTitle");
       const selectedDateMeta = document.getElementById("selectedDateMeta");
       const entryList = document.getElementById("entryList");
-      const workoutName = document.getElementById("workoutName");
       const workoutDurationWheel = document.getElementById("workoutDurationWheel");
       const workoutDurationViewport = document.querySelector(".duration-wheel-viewport");
       const presetEditorLabel = document.getElementById("presetEditorLabel");
@@ -1512,15 +1520,9 @@
       }
 
       function addWorkout() {
-        const name = workoutName.value.trim();
+        const name = "Workout";
         const duration = `${selectedDuration} min`;
         const notes = workoutNotes.value.trim();
-
-        if (!name) {
-          workoutName.focus();
-          monthHint.textContent = "Please give the workout a name before saving.";
-          return;
-        }
 
         if (activeTypes.length === 0) {
           monthHint.textContent = "Select at least one exercise type before saving.";
@@ -1537,7 +1539,6 @@
         });
 
         saveWorkouts(workouts);
-        workoutName.value = "";
         selectedDuration = 45;
         renderDurationWheel();
         workoutNotes.value = getActivePresetText();
@@ -1730,9 +1731,6 @@
       });
 
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" && document.activeElement === workoutName) {
-          addWorkout();
-        }
         if (event.key === "Enter" && (document.activeElement === weightDateInput || document.activeElement === weightValueInput)) {
           addWeightEntry();
         }
